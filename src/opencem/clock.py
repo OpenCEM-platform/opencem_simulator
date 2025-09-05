@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
+import pandas as pd
 import time
 
 @dataclass(frozen=True)
@@ -10,6 +11,10 @@ class Clock:
     @staticmethod
     def now(res: int = 10**9) -> "Clock":
         return Clock(ticks = time.time_ns() * res // 10**9, RES = res)
+
+    @staticmethod
+    def from_string(s: str, res: int = 10**9) -> "Clock":
+        return Clock(ticks = pd.Timestamp(s).value * res // 10**9, RES = res)
 
     @staticmethod
     def from_seconds(s: float, *, res: int = 10**9) -> "Clock":
@@ -40,6 +45,9 @@ class Clock:
     def to_numpy_datetime64(self) -> "np.datetime64":
         ns = self.ticks * (10**9 // self.RES)
         return np.datetime64(ns, "ns")
+
+    def __str__(self) -> str:
+        return str(self.to_numpy_datetime64())
 
     def __gt__(self, other: "Clock") -> bool:
         return self.ticks > other.ticks

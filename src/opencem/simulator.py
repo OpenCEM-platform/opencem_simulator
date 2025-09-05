@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Mapping, Optional, Sequence
-from interfaces import BatteryStepInput, GridStepInput, PowerSource, Battery, Load, Grid, Inverter, InverterStepInput, BatteryStepResult, GridStepResult, InverterStepResult, LoadStepResult, PowerSourceStepResult
-from clock import Clock
+from typing import Any, Mapping, List, Optional, Sequence
+from opencem.interfaces import BatteryStepInput, GridStepInput, PowerSource, Battery, Load, Grid, Inverter, InverterStepInput, BatteryStepResult, GridStepResult, InverterStepResult, LoadStepResult, PowerSourceStepResult, Context, ContextRecord
+from opencem.clock import Clock
 
 @dataclass
 class StepAggregates:
@@ -31,11 +31,13 @@ class CumulativeAggregates:
 
 @dataclass
 class SimulatorStepResult:
+    clock: Clock
     battery: BatteryStepResult
     power_source: PowerSourceStepResult
     load: LoadStepResult
     grid: GridStepResult
     inverter: InverterStepResult
+    context: List[ContextRecord]
     step_aggregates: StepAggregates
     cumulative_aggregates: CumulativeAggregates
 
@@ -46,7 +48,8 @@ class Simulator:
                  load: Load,
                  grid: Grid,
                  inverter: Inverter,
-                 clock = Clock.now() ):
+                 clock = Clock.now(),
+                 context: Optional[Context] = None):
         self.power_source = power_source
         self.battery = battery
         self.load = load
@@ -56,6 +59,7 @@ class Simulator:
         self.next_grid_input : Optional[GridStepInput] = None
         self.clock = clock
         self.last_cumulative = CumulativeAggregates()
+        self.context = context
 
     def step(self, step_ticks: int, *, comp_args: Mapping[str, Sequence[Any]] = {}, comp_kwargs: Mapping[str, Mapping[str, Any]] = {}):
         battery_step = self.battery.step(step_ticks, self.next_battery_input, *comp_args.get("battery", {}), **comp_kwargs.get("battery", {}))
@@ -90,5 +94,14 @@ class Simulator:
                 max_battery_soc = max(self.last_cumulative.max_battery_soc, battery_step.soc),
                 min_battery_soc = min(self.last_cumulative.min_battery_soc, battery_step.soc))
         self.last_cumulative = cumulative_aggregates
+        result = SimulatorStepResult(self.clock,
+                                     battery_step,
+                                     power_source_step,
+                                     load_step,
+                                     grid_step,
+                                     inverter_step,
+                                     [] if self.context is None else self.context.step(step_ticks),
+                                     step_aggregates,
+                                     cumulative_aggregates)
         self.clock = next_clock
-        return SimulatorStepResult(battery_step, power_source_step, load_step, grid_step, inverter_step, step_aggregates, cumulative_aggregates)
+        return result

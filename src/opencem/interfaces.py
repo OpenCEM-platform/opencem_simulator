@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from enum import Enum
+from opencem.clock import Clock
 
 class SystemComponent(ABC):
     @abstractmethod
     def step(self, step_ticks: int, *args: Any, **kwargs: Any) -> Any:
         ...
 
-    @abstractmethod
     def context(self, *args: Any, **kwargs: Any) -> None:
-        ...
+        return None
 
     @property
     def id(self) -> str:
@@ -96,4 +96,17 @@ class Inverter(SystemComponent, ABC):
     """System Component Interface for a DC->AC converter."""
     @abstractmethod
     def step(self, step_ticks: int, inverter_input: InverterStepInput, *args: Any, **kwargs: Any) -> InverterStepResult:
+        ...
+
+@dataclass
+class ContextRecord:
+    recorded_at: Clock
+    start: Clock
+    end: Clock
+    source: str
+    payload: Any
+
+class Context(SystemComponent, ABC):
+    @abstractmethod
+    def step(self, step_ticks: int, *args: Any, **kwargs: Any) -> List[ContextRecord]:
         ...
