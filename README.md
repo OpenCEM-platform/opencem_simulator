@@ -14,12 +14,15 @@ This repository contains the simulator implementation plus example workflows in 
 - Ideal for research and prototyping in energy management contexts
 
 ## Repository Structure
-├── notebooks/ # Notebooks demonstrating usage
-├── src/opencem/ # Simulator source code
-├── requirements.txt # Dependencies
+```
+opencem_simulator/
+├── notebooks/              # Jupyter notebooks with usage examples and tutorials
+├── src/
+│   └── opencem/             # OpenCEM simulator source code (Python package)
+├── requirements.txt         # Python dependencies
 ├── .gitignore
-└── README.md # This file
-
+└── README.md
+```
 ## Getting Started
 
 ### Prerequisites
