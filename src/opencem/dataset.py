@@ -1,15 +1,16 @@
 import sqlite3
+import math
 from opencem.clock import Clock
 import numpy as np
-from typing import Optional, List
+from typing import Optional, List, Type
 from opencem.interfaces import Battery, BatteryStepMode, BatteryStepInput, BatteryStepResult, PowerSource, PowerSourceStepResult, Load, LoadStepResult, Grid, GridStepInput, GridStepResult, PowerSource, PowerSourceStepResult, Inverter, InverterStepInput, InverterStepResult, Context, ContextRecord
 
-def load_context(con: sqlite3.Connection, now : Clock, location : str) -> List[ContextRecord]:
+def load_context(con: sqlite3.Connection, now : Clock) -> List[ContextRecord]:
     cur = con.cursor()
     query = f"""
         SELECT recorded, start, end, source, value 
         FROM textual
-        WHERE end >= {now.to_seconds()} AND location LIKE '%{location}%'
+        WHERE end >= {now.to_seconds()}
     """
     cur.execute(query)
     rows = cur.fetchall()
@@ -103,6 +104,29 @@ class LoadDataset(Load):
                               power_apparent_va = outva_a,
                               power_active_w = outw_a)
 
+class BlockSampledDataset():
+    def sample_new_block(self):
+        block = self.rng.integers(0, self.blocks)
+        self.clock = self.start_clock.advance_seconds(60 * 60 * self.block_hours * block)
+        self.end = self.clock.advance_seconds(60*60*self.block_hours)
+        self.ds = self.cls(self.clock, self.inverter_id, self.database)
+
+    def __init__(self, cls: Type, start_clock: Clock, end_clock: Clock, inverter_id: int, database: sqlite3.Connection, block_hours : float = 6.0, seed: int = 0):
+        self.database = database
+        self.start_clock = start_clock
+        self.inverter_id = inverter_id
+        self.blocks = math.floor(Clock.difference_hours(start_clock, end_clock)/8)
+        self.block_hours = block_hours
+        self.rng = np.random.default_rng(seed)
+        self.cls = cls
+        self.sample_new_block()
+
+    def step(self, step_ticks: int, *args, **kwargs):
+        if self.clock > self.end:
+            self.sample_new_block()
+        self.clock = self.clock.advance(step_ticks)
+        return self.ds.step(step_ticks, *args, **kwargs)
+
 class GridDataset(Grid):
     def __init__(self, clock: Clock, inverter_id: int, database: sqlite3.Connection):
         self.clock = clock
@@ -156,9 +180,9 @@ class InverterDataset(Inverter):
                                   generator_power_drawn_w = pv1power)
 
 class ContextDataset(Context):
-    def __init__(self, clock: Clock, location: str, horizon_ticks: int, database: sqlite3.Connection):
+    def __init__(self, clock: Clock, horizon_ticks: int, database: sqlite3.Connection):
         self.clock = clock
-        self.all_context = load_context(database, clock, location)
+        self.all_context = load_context(database, clock)
         self.horizon = horizon_ticks
 
     def step(self, step_ticks: int) -> List[ContextRecord]:
@@ -166,3 +190,25 @@ class ContextDataset(Context):
         self.clock = self.clock.advance(step_ticks)
         out = [c for c in self.all_context if c.end > now and now > c.recorded_at and now.advance(self.horizon) > c.start]
         return out
+
+class BlockSampledContext():
+    def sample_new_block(self):
+        block = self.rng.integers(0, self.blocks)
+        self.clock = self.start_clock.advance_seconds(60 * 60 * self.block_hours * block)
+        self.end = self.clock.advance_seconds(60*60*self.block_hours)
+        self.ds = ContextDataset(self.clock, self.horizon_ticks, self.database)
+
+    def __init__(self, start_clock: Clock, end_clock: Clock, horizon_ticks: int, database: sqlite3.Connection, block_hours : float = 6.0, seed: int = 0):
+        self.database = database
+        self.start_clock = start_clock
+        self.horizon_ticks = horizon_ticks
+        self.blocks = math.floor(Clock.difference_hours(start_clock, end_clock)/8)
+        self.block_hours = block_hours
+        self.rng = np.random.default_rng(seed)
+        self.sample_new_block()
+
+    def step(self, step_ticks: int):
+        if self.clock > self.end:
+            self.sample_new_block()
+        self.clock = self.clock.advance(step_ticks)
+        return self.ds.step(step_ticks)
