@@ -8,7 +8,7 @@ from opencem.interfaces import Battery, BatteryStepMode, BatteryStepInput, Batte
 def load_context(con: sqlite3.Connection, now : Clock) -> List[ContextRecord]:
     cur = con.cursor()
     query = f"""
-        SELECT recorded, start, end, source, value 
+        SELECT recorded, start, end, value 
         FROM textual
         WHERE end >= {now.to_seconds()}
     """
