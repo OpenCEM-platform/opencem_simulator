@@ -1,5 +1,6 @@
 import sqlite3
 import math
+import json
 from opencem.clock import Clock
 import numpy as np
 from typing import Optional, List, Type
@@ -9,12 +10,12 @@ def load_context(con: sqlite3.Connection, now : Clock) -> List[ContextRecord]:
     cur = con.cursor()
     query = f"""
         SELECT recorded, start, end, value 
-        FROM textual
+        FROM context
         WHERE end >= {now.to_seconds()}
     """
     cur.execute(query)
     rows = cur.fetchall()
-    return [ContextRecord(Clock.from_seconds(r[0]), Clock.from_seconds(r[1]), Clock.from_seconds(r[2]), r[3], r[4]) for r in rows]
+    return [ContextRecord(Clock.from_seconds(r[0]), Clock.from_seconds(r[1]), Clock.from_seconds(r[2]), json.loads(r[3])) for r in rows]
 
 def load_inverter_array(con: sqlite3.Connection, col : str, inv : int, ts : float):
     cur = con.cursor()

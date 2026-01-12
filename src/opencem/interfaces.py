@@ -103,7 +103,6 @@ class ContextRecord:
     recorded_at: Clock
     start: Clock
     end: Clock
-    source: str
     payload: Any
 
 class Context(SystemComponent, ABC):
