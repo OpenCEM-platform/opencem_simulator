@@ -42,6 +42,8 @@ jupyter notebook
 
 ```
 
+### Dataset Usage via Simulator Classes
+
 You can then follow the notebooks step-by-step to:
 
 * Initialize the simulator
@@ -50,7 +52,40 @@ You can then follow the notebooks step-by-step to:
 
 The notebooks contain instructions on how to configure the simulator and interpret results.
 
-To validate your own control strategies you can overwrite inherit the Inverter Interface.
+To validate your own control strategies you can implement a controller inheriting the Inverter Interface.
+
+### Raw Dataset Access
+
+The raw dataset can be found in [notebooks/opencem_dataset.7z](https://github.com/OpenCEM-platform/opencem_simulator/blob/main/notebooks/opencem_dataset.7z) which contains a Sqlite database.
+
+Sqlite bindings are available for all major programming languages, e.g. for Python via the [sqlite3](https://docs.python.org/3/library/sqlite3.html) standard library module.
+
+The schema of the dataset can be obtained by running the following commands using the `sqlite3` command-line utility:
+
+```sh
+sqlite3 opencem_dataset.db
+```
+```sql
+sqlite> .tables
+analog_measurements  context
+sqlite> .schema analog_measurements
+CREATE TABLE IF NOT EXISTS "analog_measurements" (
+        "read_ts"       INTEGER,
+        "inverter"      INT,
+        "battvolt"      REAL,
+--...
+        "grid_reserve"  TEXT
+);
+sqlite> .schema context
+CREATE TABLE IF NOT EXISTS "context" (
+        "id"    INTEGER NOT NULL,
+        "recorded"      INTEGER,
+        "start" INTEGER,
+        "end"   INTEGER,
+        "value" TEXT,
+        PRIMARY KEY("id" AUTOINCREMENT)
+);
+```
 
 ## Citation
 
