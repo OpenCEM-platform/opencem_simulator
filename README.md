@@ -2,9 +2,7 @@ Project Website: https://opencem-platform.github.io/
 
 # OpenCEM Simulator
 
-**OpenCEM Simulator** is the simulation component of the *Open In-Context Energy Management Platform* (OpenCEM). It provides a Python-based 
-environment to emulate microgrid operation — including renewable generation, storage, and load — and to evaluate algorithm 
-performance with real-world time series and context.
+Addressing the critical need for intelligent, context-aware energy management in renewable systems, we introduce the **OpenCEM Simulator and Dataset**: An open-source digital twin in Python explicitly designed to integrate rich, unstructured contextual information with quantitative renewable energy dynamics. Traditional energy management relies heavily on numerical time series, thereby neglecting the significant predictive power embedded in human-generated context (e.g., event schedules, system logs, user intentions). OpenCEM bridges this gap by offering a platform comprising both a meticulously aligned, language-rich dataset from a real-world PV-and-battery microgrid installation and a modular simulator capable of natively processing this multi-modal context. The OpenCEM Simulator provides a high-fidelity environment for developing and validating novel control algorithms and prediction models, particularly those leveraging Large Language Models.
 
 This repository contains the simulator implementation plus example workflows in Jupyter notebooks.
 
