@@ -1,4 +1,4 @@
-Project Website: [https://opencem-platform.github.io/](https://tongxin.me/opencem/)
+Project Website: [[https://opencem-platform.github.io/](https://tongxin.me/opencem/)](https://tongxin.me/opencem/)
 
 # OpenCEM Simulator
 
